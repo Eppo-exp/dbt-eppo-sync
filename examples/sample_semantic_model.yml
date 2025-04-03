@@ -1,0 +1,79 @@
+# examples/sample_semantic_model.yml
+# Aligned with sample_manifest.json (example_manifest_json)
+
+semantic_models:
+  # Semantic Model based on dim_users
+  - name: users
+    description: Represents individual registered users and their attributes.
+    model: ref('dim_users') # Matches model name in manifest
+    defaults:
+      agg_time_dimension: user_signup_ts # Default time dim for metrics using this SM
+
+    entities:
+      - name: user         # Matches entity name convention
+        type: primary
+        expr: user_id     # Column from dim_users SQL
+
+    dimensions:
+      # REQUIRED Timestamp dimension
+      - name: user_signup_ts
+        type: time
+        expr: created_at  # Column from dim_users SQL
+        time_granularity: day # Example granularity
+      # Other dimensions
+      - name: country_code # Name used in filters/metrics
+        type: categorical
+        expr: country_iso_code # Column from dim_users SQL
+      - name: account_status
+        type: categorical
+        expr: status          # Column from dim_users SQL
+
+    measures:
+      # Measure names should be unique within the SM
+      - name: count_of_users
+        description: Count of distinct users based on user_id.
+        agg: count_distinct # Use count_distinct on the primary key
+        expr: user_id
+      - name: total_lifetime_revenue
+        description: Sum of lifetime revenue across users.
+        agg: sum
+        expr: lifetime_revenue # Column from dim_users SQL
+        agg_time_dimension: user_signup_ts # Optional: specify time dim for this measure
+      - name: count_active_users # Renamed from is_active for clarity
+        description: Count of users with active_status_flag = 1.
+        agg: sum # Summing a 0/1 flag gives the count of '1's
+        expr: active_status_flag # Column from dim_users SQL
+
+  # Semantic Model based on fct_orders
+  - name: orders
+    description: Represents individual order events.
+    model: ref('fct_orders') # Matches model name in manifest
+    defaults:
+      agg_time_dimension: order_ts # Default time dim
+
+    entities:
+      # Order is primary for this model
+      - name: order
+        type: primary
+        expr: order_id   # Column from fct_orders SQL
+      # User is a foreign key linking orders to users
+      - name: user
+        type: foreign
+        expr: user_id   # Column from fct_orders SQL
+
+    dimensions:
+      # REQUIRED Timestamp dimension
+      - name: order_ts
+        type: time
+        expr: created_at # Column from fct_orders SQL (represents order time here)
+        time_granularity: day
+
+    measures:
+      - name: total_order_revenue
+        description: Sum of revenue from orders.
+        agg: sum
+        expr: order_total # Column from fct_orders SQL
+      - name: count_of_orders
+        description: Count of distinct orders.
+        agg: count_distinct # Use count_distinct on primary key
+        expr: order_id

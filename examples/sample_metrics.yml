@@ -1,0 +1,41 @@
+# examples/sample_metrics.yml
+# Aligned with sample_manifest.json and sample_semantic_model.yml (aligned versions)
+# Simplified: Removed percentile, ratio, and average type metrics.
+
+metrics:
+  # Metric based on 'users' semantic model
+  - name: sum_total_lifetime_revenue
+    label: "Sum of Total Lifetime Revenue"
+    description: "The sum of the lifetime_revenue column across all users."
+    type: sum # Maps to Eppo 'simple' type, op 'sum'
+    measure:
+      name: total_lifetime_revenue # References measure in 'users' SM
+    # Example meta tags for Eppo metric properties
+    meta:
+      eppo_metric_display_style: decimal
+
+  # Metric based on 'users' semantic model with a filter
+  - name: count_active_users_ca
+    label: "Active Users (Canada)"
+    description: "The count of active users whose country code is 'CA'."
+    type: sum # Summing the 0/1 active flag measure
+    measure:
+      name: count_active_users # References measure in 'users' SM
+    filter: "{{ Dimension('users__user__country_code') }} = 'CA'" # Correct dimension name
+
+  # Metric based on 'orders' semantic model
+  - name: sum_total_order_revenue
+    label: "Sum of Total Order Revenue"
+    description: "The sum of revenue across all orders."
+    type: sum # Maps to Eppo 'simple' type, op 'sum'
+    measure:
+      name: total_order_revenue # References measure in 'orders' SM
+
+  # You could add a simple count metric for orders if needed:
+  # - name: count_orders
+  #   label: "Total Order Count"
+  #   description: "The total count of distinct orders."
+  #   type: count_distinct # Maps to Eppo 'simple' type, op 'count_distinct' or 'distinct_entity'
+  #   measure:
+  #     name: count_of_orders # References measure in 'orders' SM
+

@@ -1,0 +1,246 @@
+{
+    "metadata": {
+      "dbt_schema_version": "https://schemas.getdbt.com/dbt/manifest/v11.json",
+      "dbt_version": "1.7.1",
+      "generated_at": "2025-04-03T12:30:00.123456Z",
+      "invocation_id": "example-invocation-id-2",
+      "env": {},
+      "project_name": "my_example_dbt_project",
+      "project_id": "example_project_id_abc",
+      "user_id": "example_user_uuid_2",
+      "send_anonymous_usage_stats": false,
+      "adapter_type": "snowflake"
+    },
+    "nodes": {
+      "model.my_example_dbt_project.dim_users": {
+        "raw_code": "SELECT  user_id,  created_at,  country_iso_code,  status,  lifetime_revenue,  active_status_flag FROM {{ ref('stg_users') }}",
+        "compiled": true,
+        "resource_type": "model",
+        "depends_on": {
+          "macros": [],
+          "nodes": [
+            "model.my_example_dbt_project.stg_users"
+          ]
+        },
+        "config": {
+          "enabled": true,
+          "materialized": "table",
+          "tags": ["dimension", "users"]
+        },
+        "database": "ANALYTICS",
+        "schema": "DBT_PROD",
+        "name": "dim_users",
+        "tags": ["dimension", "users"],
+        "path": "models/dimensions/dim_users.sql",
+        "original_file_path": "models/dimensions/dim_users.sql",
+        "unique_id": "model.my_example_dbt_project.dim_users",
+        "fqn": [
+          "my_example_dbt_project",
+          "dimensions",
+          "dim_users"
+        ],
+        "package_name": "my_example_dbt_project",
+        "relation_name": "`ANALYTICS`.`DBT_PROD`.`DIM_USERS`",
+        "compiled_code": "SELECT user_id, created_at, country_iso_code,  status,  lifetime_revenue,  active_status_flag FROM ANALYTICS.DBT_STAGING.STG_USERS",
+        "language": "sql",
+        "checksum": {
+           "name": "sha256",
+           "checksum": "examplechecksum123abc"
+        }
+      },
+      "model.my_example_dbt_project.stg_users": {
+        "raw_code": "SELECT  id as user_id,  signup_date as created_at,  country as country_iso_code,  account_status as status,  ltv as lifetime_revenue,  is_currently_active as active_status_flag FROM {{ source('public', 'users_source_table') }}",
+        "compiled": true,
+        "resource_type": "model",
+        "depends_on": {
+          "macros": [],
+          "nodes": [
+            "source.my_example_dbt_project.public.users_source_table"
+          ]
+        },
+        "config": {
+          "enabled": true,
+          "materialized": "view",
+           "tags": ["staging"]
+        },
+        "database": "ANALYTICS",
+        "schema": "DBT_STAGING",
+        "name": "stg_users",
+        "tags": ["staging"],
+        "path": "models/staging/stg_users.sql",
+        "original_file_path": "models/staging/stg_users.sql",
+        "unique_id": "model.my_example_dbt_project.stg_users",
+        "fqn": [
+          "my_example_dbt_project",
+          "staging",
+          "stg_users"
+        ],
+        "package_name": "my_example_dbt_project",
+        "relation_name": "`ANALYTICS`.`DBT_STAGING`.`STG_USERS`",
+        "compiled_code": "SELECT  id as user_id,  signup_date as created_at,  country as country_iso_code,  account_status as status,  ltv as lifetime_revenue,  is_currently_active as active_status_flag FROM RAW_DATA.PUBLIC.USERS_SOURCE_TABLE",
+        "language": "sql",
+         "checksum": {
+           "name": "sha256",
+           "checksum": "examplechecksum456def"
+        }
+      },
+       "model.my_example_dbt_project.fct_orders": {
+        "raw_code": "SELECT  order_id,  customer_id as user_id,  order_date as created_at,  order_total FROM {{ source('public', 'orders_source_table') }}",
+        "compiled": true,
+        "resource_type": "model",
+        "depends_on": {
+          "macros": [],
+          "nodes": [
+            "source.my_example_dbt_project.public.orders_source_table"
+          ]
+        },
+        "config": {
+          "enabled": true,
+          "materialized": "incremental"
+        },
+        "database": "ANALYTICS",
+        "schema": "DBT_PROD",
+        "name": "fct_orders",
+        "tags": ["fact", "orders"],
+        "path": "models/marts/fct_orders.sql",
+        "original_file_path": "models/marts/fct_orders.sql",
+        "unique_id": "model.my_example_dbt_project.fct_orders",
+        "fqn": [
+          "my_example_dbt_project",
+          "marts",
+          "fct_orders"
+        ],
+        "package_name": "my_example_dbt_project",
+        "relation_name": "`ANALYTICS`.`DBT_PROD`.`FCT_ORDERS`",
+        "compiled_code": "SELECT  order_id,  customer_id as user_id,  order_date as created_at,  order_total FROM RAW_DATA.PUBLIC.ORDERS_SOURCE_TABLE",
+        "language": "sql",
+         "checksum": {
+           "name": "sha256",
+           "checksum": "examplechecksum789ghi"
+        }
+      },
+      "source.my_example_dbt_project.public.users_source_table": {
+        "unique_id": "source.my_example_dbt_project.public.users_source_table",
+        "resource_type": "source",
+        "source_name": "public",
+        "name": "users_source_table",
+        "database": "RAW_DATA",
+        "schema": "PUBLIC",
+        "loader": "manual",
+        "identifier": "USERS_SOURCE_TABLE",
+        "quoting": {"database": true, "schema": true, "identifier": true},
+        "loaded_at_field": null,
+        "freshness": null,
+        "external": null,
+        "description": "Source table for user data",
+        "columns": {},
+        "meta": {},
+        "tags": [],
+        "config": {"enabled": true},
+        "path": "models/sources/sources.yml",
+        "original_file_path": "models/sources/sources.yml",
+        "package_name": "my_example_dbt_project",
+        "fqn": ["my_example_dbt_project", "public", "users_source_table"]
+      },
+       "source.my_example_dbt_project.public.orders_source_table": {
+        "unique_id": "source.my_example_dbt_project.public.orders_source_table",
+        "resource_type": "source",
+        "source_name": "public",
+        "name": "orders_source_table",
+        "database": "RAW_DATA",
+        "schema": "PUBLIC",
+        "loader": "manual",
+        "identifier": "ORDERS_SOURCE_TABLE",
+        "quoting": {"database": true, "schema": true, "identifier": true},
+        "loaded_at_field": null,
+        "freshness": null,
+        "external": null,
+        "description": "Source table for order data",
+        "columns": {},
+        "meta": {},
+        "tags": [],
+        "config": {"enabled": true},
+        "path": "models/sources/sources.yml",
+        "original_file_path": "models/sources/sources.yml",
+        "package_name": "my_example_dbt_project",
+        "fqn": ["my_example_dbt_project", "public", "orders_source_table"]
+      }
+    },
+    "sources": {
+      "source.my_example_dbt_project.public.users_source_table": {
+         "unique_id": "source.my_example_dbt_project.public.users_source_table",
+         "resource_type": "source",
+         "source_name": "public",
+         "name": "users_source_table",
+         "database": "RAW_DATA",
+         "schema": "PUBLIC",
+         "loader": "manual",
+         "identifier": "USERS_SOURCE_TABLE",
+         "quoting": {"database": true, "schema": true, "identifier": true},
+         "loaded_at_field": null,
+         "freshness": null,
+         "external": null,
+         "description": "Source table for user data",
+         "columns": {},
+         "meta": {},
+         "tags": [],
+         "config": {"enabled": true},
+         "path": "models/sources/sources.yml",
+         "original_file_path": "models/sources/sources.yml",
+         "package_name": "my_example_dbt_project",
+         "fqn": ["my_example_dbt_project", "public", "users_source_table"]
+      },
+       "source.my_example_dbt_project.public.orders_source_table": {
+        "unique_id": "source.my_example_dbt_project.public.orders_source_table",
+        "resource_type": "source",
+        "source_name": "public",
+        "name": "orders_source_table",
+        "database": "RAW_DATA",
+        "schema": "PUBLIC",
+        "loader": "manual",
+        "identifier": "ORDERS_SOURCE_TABLE",
+        "quoting": {"database": true, "schema": true, "identifier": true},
+        "loaded_at_field": null,
+        "freshness": null,
+        "external": null,
+        "description": "Source table for order data",
+        "columns": {},
+        "meta": {},
+        "tags": [],
+        "config": {"enabled": true},
+        "path": "models/sources/sources.yml",
+        "original_file_path": "models/sources/sources.yml",
+        "package_name": "my_example_dbt_project",
+        "fqn": ["my_example_dbt_project", "public", "orders_source_table"]
+      }
+    },
+    "metrics": {},
+    "exposures": {},
+    "macros": [],
+    "docs": {},
+    "disabled": [],
+    "child_map": {
+       "model.my_example_dbt_project.stg_users": [
+          "model.my_example_dbt_project.dim_users"
+       ],
+       "source.my_example_dbt_project.public.users_source_table": [
+          "model.my_example_dbt_project.stg_users"
+       ],
+       "source.my_example_dbt_project.public.orders_source_table": [
+          "model.my_example_dbt_project.fct_orders"
+       ]
+    },
+    "parent_map": {
+       "model.my_example_dbt_project.dim_users": [
+          "model.my_example_dbt_project.stg_users"
+       ],
+       "model.my_example_dbt_project.stg_users": [
+          "source.my_example_dbt_project.public.users_source_table"
+       ],
+        "model.my_example_dbt_project.fct_orders": [
+          "source.my_example_dbt_project.public.orders_source_table"
+       ]
+    },
+    "semantic_models": {}
+  }
+  

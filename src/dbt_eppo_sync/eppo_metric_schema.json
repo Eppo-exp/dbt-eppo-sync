@@ -1,0 +1,299 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://github.com/Eppo-exp/dbt-eppo-sync",
+    "title": "Eppo Metric Sync",
+    "description": "The schema for the Eppo metric sync API endpoint.",
+    "type": "object",
+    "properties": {
+        "sync_tag": {
+            "description": "An optional identifier for the source of metrics. Recommended to be defined in CI/CD and not in yaml files",
+            "type": "string"
+        },
+        "fact_sources": {
+            "description": "A fact source, corresponds to a fact SQL definition in the Eppo UI",
+            "type": "array",
+            "items": {
+                "additionalProperties": false,
+                "required": ["name", "sql", "timestamp_column", "entities", "facts"],
+                "properties": {
+                    "name": {
+                        "description": "A name for the fact source",
+                        "type": "string"
+                    },
+                    "sql": {
+                        "description": "SQL that returns a unique entity identifer (e.g., user_id), a timestamp, and optional numeric values and properties",
+                        "type": "string"
+                    },
+                    "timestamp_column": {
+                        "description": "Timestamp associated with the fact event",
+                        "type": "string"
+                    },
+                    "reference_url": {
+                        "description": "URL to use for 'Open in GitHub' in Eppo UI (optional)",
+                        "type": "string"
+                    },
+                    "entities": {
+                        "description": "A mapping of columns returned by SQL to entities created in Eppo UI. Names must exactly match entity names in Eppo UI",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["entity_name", "column"],
+                            "properties": {
+                                "entity_name": {
+                                    "description": "The name of the entity, must exactly match name specified in Eppo UI",
+                                    "type": "string"
+                                },
+                                "column": {
+                                    "description": "The column with a unique identifier for the entity (e.g., user_id)",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "facts": {
+                        "description": "A mapping of columns returned by sql to facts",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["name"],
+                            "additionalProperties": false,
+                            "properties": {
+                                "name": {
+                                    "description": "A user-friendly name for this fact",
+                                    "type": "string"
+                                },
+                                "column": {
+                                    "description": "The column that contains this fact (if not specified, will use each record)",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "User-friendly description of the fact",
+                                    "type": "string"
+                                },
+                                "desired_change" : {
+                                    "description": "Specify whether or not increases in the fact are desired",
+                                    "enum": ["increase", "decrease"]
+                                }
+                            }
+                        }
+                    },
+                    "properties": {
+                        "description": "Properties allow you to breakout facts by different groups (optional)",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["name", "column"],
+                            "properties": {
+                                "name": {
+                                    "description": "A user-friendly name for the fact property",
+                                    "type": "string"
+                                },
+                                "column": {
+                                    "description": "The column that contains the fact property",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "User-friendly description of the fact property",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "metrics": {
+            "description": "Metrics consist of a fact, and aggregation method, and optional fact property filters",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "entity", "numerator"],
+                "properties": {
+                    "name": {
+                        "description": "A user-friendly name shown in the Eppo UI",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "A user-friendly description of the fact",
+                        "type": "string"
+                    },
+                    "entity": {
+                        "description": "Must exactly match entity's name in Eppo UI",
+                        "type": "string"
+                    },
+                    "is_guardrail": {
+                        "description": "Boolean for whether to include metric as a guardrail",
+                        "type": "boolean"
+                    },
+                    "metric_display_style": {
+                        "description": "Either decimal or percent",
+                        "enum": ["decimal", "percent"]
+                    },
+                    "minimum_detectable_effect": {
+                        "description": "Default minimum detectable effect used in progress bar",
+                        "type": "number"
+                    },
+                    "reference_url": {
+                        "description": "URL to use for 'Open in GitHub' in Eppo UI (optional)",
+                        "type": "string"
+                    },
+                    "numerator": {
+                        "description": "Specify how the numerator of this metric should be aggregated",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["fact_name", "operation"],
+                        "properties": {
+                            "fact_name": {
+                                "description": "Must match one of the values in fact_sources.facts.name",
+                                "type": "string"
+                            },
+                            "operation": {
+                                "description": "Which aggregation to apply to the fact",
+                                "enum": ["sum", "count", "distinct_entity", "threshold", "conversion", "retention"]
+                            },
+                            "filters": {
+                                "description": "Optional fact property filters to apply",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": ["fact_property", "operation", "values"],
+                                    "properties": {
+                                        "fact_property": {
+                                            "description": "Must match one of the values in fact_sources.properties.name",
+                                            "type": "string"
+                                        },
+                                        "operation": {
+                                            "description": "Either equals or not_equals",
+                                            "enum": ["equals", "not_equals"]
+                                        },
+                                        "values": {
+                                            "description": "Values to include if operation is 'equals', or exclude if operation is 'not_equals'",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "retention_threshold_days": {
+                                "description": "Only used if operation = retention",
+                                "type": "number"
+                            },
+                            "conversion_threshold_days": {
+                                "description": "Only used if operation = conversion",
+                                "type": "number"
+                            },
+                            "threshold_metric_settings": {
+                                "description": "Only used if operation = conversion",
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": ["comparions_operator", "aggregation_type", "breach_value"],
+                                "properties": {
+                                    "comparions_operator": {
+                                        "description": "One of gt or gte",
+                                        "enum": ["gt", "gte"]
+                                    },
+                                    "aggregation_type": {
+                                        "description": "One of sum or count",
+                                        "enum": ["sum", "count"]
+                                    },
+                                    "breach_value": {
+                                        "description": "At what value is the threshold breached?",
+                                        "type": "number"
+                                    },
+                                    "timeframe_unit": {
+                                        "description": "What time unit to use: minutes, hours, days, or weeks (optional)",
+                                        "enum": ["minutes", "hours", "days", "weeks"]
+                                    },
+                                    "timeframe_value": {
+                                        "description": "How many timeframe units since assignment to include (optional)",
+                                        "value": "number"
+                                    }
+                                }
+                            },
+                            "aggregation_timeframe_value": {
+                                "description": "How many timeframe units since assignment to include (optional)",
+                                "value": "number"
+                            },
+                            "aggregation_timeframe_unit": {
+                                "description": "What time unit to use: minutes, hours, days, or weeks (optional)",
+                                "enum": ["minutes", "hours", "days", "weeks"]
+                            },
+                            "winsorization_lower_percentile": {
+                                "description": "Percentile at which to clip aggregated metrics (optional)",
+                                "type": "number"
+                            },
+                            "winsorization_upper_percentile": {
+                                "description": "Percentile at which to clip aggregated metrics (optional)",
+                                "type": "number"
+                            }
+                        }
+                    },
+                    "denominator": {
+                        "description": "For ratio metrics only: specify how the denominator of this metric should be aggregated",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["fact_name", "operation"],
+                        "properties": {
+                            "fact_name": {
+                                "description": "Must match one of the values specified in fact_sources.facts.name",
+                                "type": "string"
+                            },
+                            "operation": {
+                                "description": "How to aggregate fact",
+                                "enum": ["sum", "count", "distinct_entity"]
+                            },
+                            "filters": {
+                                "description": "Optional fact property filters to apply",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": ["fact_property", "operation", "values"],
+                                    "properties": {
+                                        "fact_property": {
+                                            "description": "Must match one of the values in fact_sources.properties.name",
+                                            "type": "string"
+                                        },
+                                        "operation": {
+                                            "description": "Either equals or not_equals",
+                                            "enum": ["equals", "not_equals"]
+                                        },
+                                        "values": {
+                                            "description": "Values to include if operation is 'equals', or exclude if operation is 'not_equals'",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "aggregation_timeframe_value": {
+                                "description": "How many timeframe units since assignment to include (optional)",
+                                "type": "number"
+                            },
+                            "aggregation_timeframe_unit": {
+                                "description": "What time unit to use: minutes, hours, days, or weeks (optional)",
+                                "enum": ["minutes", "hours", "days", "weeks"]
+                            },
+                            "winsorization_lower_percentile": {
+                                "description": "Percentile at which to clip aggregated metrics (optional)",
+                                "type": "number"
+                            },
+                            "winsorization_upper_percentile": {
+                                "description": "Percentile at which to clip aggregated metrics (optional)",
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
