@@ -1,6 +1,9 @@
 # dbt-Eppo Sync Tool
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) A Python utility to synchronize semantic definitions from your dbt project (semantic models and metrics) to your Eppo instance using Eppo's bulk metrics sync API (`/api/v1/metrics/sync`).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/Eppo-exp/dbt-eppo-sync/actions/workflows/test.yml/badge.svg)](https://github.com/Eppo-exp/dbt-eppo-sync/actions/workflows/test.yml)
+
+A Python utility to synchronize semantic definitions from your dbt project (semantic models and metrics) to your Eppo instance using Eppo's bulk metrics sync API (`/api/v1/metrics/sync`).
 
 ## Features
 

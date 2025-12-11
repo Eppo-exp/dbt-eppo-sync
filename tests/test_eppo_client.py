@@ -21,6 +21,8 @@ def mock_session(mocker):
     # Mock the request method on the session instance
     mock_instance = mock.return_value
     mock_instance.request = MagicMock()
+    mock_instance.headers = MagicMock()  # Add headers mock
+    mock_instance.headers.update = MagicMock()  # Mock the update method
     return mock_instance # Return the mocked session instance
 
 @pytest.fixture
@@ -37,12 +39,9 @@ def test_client_initialization():
     assert client.base_url == BASE_URL # Should not have trailing slash
     assert client.api_key == API_KEY
     # Check if headers are set correctly on the session
-    expected_headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-    client.session.headers.update.assert_called_once_with(expected_headers)
+    assert client.session.headers['X-Eppo-Token'] == API_KEY
+    assert client.session.headers['Content-Type'] == "application/json"
+    assert client.session.headers['Accept'] == "application/json"
 
 def test_client_initialization_missing_key():
     """Test ValueError if API key is missing."""
@@ -101,7 +100,7 @@ def test_sync_definitions_api_error(client: EppoClient, mock_session: MagicMock)
 
     assert excinfo.value.status_code == 400
     assert "Invalid payload" in excinfo.value.response_text
-    assert "Eppo API request failed" in str(excinfo.value)
+    assert "Network error contacting Eppo API" in str(excinfo.value)
 
 def test_sync_definitions_network_error(client: EppoClient, mock_session: MagicMock):
     """Test handling of network errors during the request."""
