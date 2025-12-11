@@ -10,7 +10,7 @@ packages = [{include = "dbt_eppo_sync", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9" 
 pyyaml = "^6.0" # For parsing YAML files
-requests = "^2.31.0" # For making API calls to Eppo
+requests = "^2.32.4" # For making API calls to Eppo
 dbt-core = "^1.8.0" # For interacting with dbt artifacts
 click = "^8.1.8"
 jsonschema = "^4.23.0"
