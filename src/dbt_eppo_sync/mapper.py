@@ -221,7 +221,10 @@ def map_dbt_to_eppo_sync_payload(
     dbt_semantic_models: List[DbtSemanticModel],
     sql_map: CompiledSqlMap,
     sync_tag: Optional[str] = None,
-    reference_url_base: Optional[str] = None # e.g., base URL for linking back to git repo
+    reference_url_base: Optional[str] = None,  # e.g., base URL for linking back to git repo
+    creator_email: Optional[str] = None,
+    updater_email: Optional[str] = None,
+    team_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Maps parsed dbt artifacts to the Eppo bulk sync API payload structure,
@@ -233,6 +236,9 @@ def map_dbt_to_eppo_sync_payload(
         sql_map: Dictionary mapping model unique_ids to compiled SQL.
         sync_tag: An optional tag for the sync operation.
         reference_url_base: Optional base URL for constructing reference links.
+        creator_email: Optional email for metric creator (sync-level default). Omit to clear.
+        updater_email: Optional email for last updater (sync-level default). Omit to clear.
+        team_name: Optional team name to associate with metrics (sync-level default). Omit to clear.
 
     Returns:
         A dictionary formatted for the Eppo '/api/v1/metrics/sync' endpoint.
@@ -451,6 +457,15 @@ def map_dbt_to_eppo_sync_payload(
                 if denominator_payload: denominator_payload["filters"] = eppo_filters # Apply same filters? Check Eppo logic
 
 
+            # --- Per-metric overrides for creator/updater/team (only include when metric overrides sync-level) ---
+            per_metric_meta = {}
+            if _get_meta_value(metric, 'eppo_creator_email') is not None:
+                per_metric_meta["creator_email"] = _get_meta_value(metric, 'eppo_creator_email')
+            if _get_meta_value(metric, 'eppo_updater_email') is not None:
+                per_metric_meta["updater_email"] = _get_meta_value(metric, 'eppo_updater_email')
+            if _get_meta_value(metric, 'eppo_team_name') is not None:
+                per_metric_meta["team_name"] = _get_meta_value(metric, 'eppo_team_name')
+
             # --- Construct Eppo Metric Object ---
             eppo_metric = {
                 "name": metric.get('label') or metric_name, # Prefer label for display name
@@ -461,6 +476,7 @@ def map_dbt_to_eppo_sync_payload(
                 "metric_display_style": _get_meta_value(metric, 'eppo_display_style'),
                 "minimum_detectable_effect": _get_meta_value(metric, 'eppo_mde'),
                 "reference_url": _get_meta_value(metric, 'eppo_reference_url'),
+                **per_metric_meta,
                 # Required/Optional structures
                 "numerator": numerator_payload,
                 "denominator": denominator_payload,
@@ -494,6 +510,13 @@ def map_dbt_to_eppo_sync_payload(
         "fact_sources": eppo_fact_sources,
         "metrics": eppo_metrics
     }
+    # Sync-level optional fields (only include when provided; omit = clear on API)
+    if creator_email is not None:
+        final_payload["creator_email"] = creator_email
+    if updater_email is not None:
+        final_payload["updater_email"] = updater_email
+    if team_name is not None:
+        final_payload["team_name"] = team_name
 
     print(f"\nFinished mapping. Generated {len(eppo_fact_sources)} fact sources and {len(eppo_metrics)} metrics.")
     return final_payload

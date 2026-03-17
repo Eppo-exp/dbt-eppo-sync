@@ -9,6 +9,22 @@
             "description": "An optional identifier for the source of metrics. Recommended to be defined in CI/CD and not in yaml files",
             "type": "string"
         },
+        "creator_email": {
+            "description": "Email of the user to set as metric creator (sync-level default). Resolved to company user; omit to clear.",
+            "type": "string",
+            "format": "email"
+        },
+        "updater_email": {
+            "description": "Email of the user to set as last updater (sync-level default). Resolved to company user; omit to clear.",
+            "type": "string",
+            "format": "email"
+        },
+        "team_name": {
+            "description": "Name of the team to associate with metrics (sync-level default, 1–200 chars). Resolved by name within company; omit to clear.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+        },
         "fact_sources": {
             "description": "A fact source, corresponds to a fact SQL definition in the Eppo UI",
             "type": "array",
@@ -139,6 +155,22 @@
                     "reference_url": {
                         "description": "URL to use for 'Open in GitHub' in Eppo UI (optional)",
                         "type": "string"
+                    },
+                    "creator_email": {
+                        "description": "Email of the user to set as metric creator (per-metric override). Omit to use sync-level or clear.",
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "updater_email": {
+                        "description": "Email of the user to set as last updater (per-metric override). Omit to use sync-level or clear.",
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "team_name": {
+                        "description": "Name of the team to associate with this metric (per-metric override, 1–200 chars). Omit to use sync-level or clear.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
                     },
                     "numerator": {
                         "description": "Specify how the numerator of this metric should be aggregated",

@@ -4,7 +4,8 @@ import click
 import os
 import sys
 import pathlib
-from typing import Optional
+import yaml
+from typing import Optional, Dict, Any
 
 # Import the main sync function and constants/errors
 try:
@@ -62,18 +63,56 @@ except ImportError:
     metavar='TAG'
 )
 @click.option(
+    '--creator-email',
+    help="Email of the user to set as metric creator (sync-level). Omit to clear.",
+    metavar='EMAIL'
+)
+@click.option(
+    '--updater-email',
+    help="Email of the user to set as last updater (sync-level). Omit to clear.",
+    metavar='EMAIL'
+)
+@click.option(
+    '--team-name',
+    help="Name of the team to associate with metrics (sync-level, 1–200 chars). Omit to clear.",
+    metavar='NAME'
+)
+@click.option(
     '--dry-run',
     is_flag=True,
     default=False,
     help="Perform parsing and mapping but do not send data to Eppo API. Prints the payload instead."
 )
 @click.version_option(package_name='dbt-eppo-sync') # Reads version from pyproject.toml if installed
+def _load_eppo_sync_config(dbt_project_dir: pathlib.Path) -> Dict[str, Any]:
+    """Load optional eppo_sync config from dbt_project.yml (key 'eppo_sync' or 'vars.eppo_sync')."""
+    config_path = dbt_project_dir / "dbt_project.yml"
+    if not config_path.is_file():
+        return {}
+    try:
+        with open(config_path, "r") as f:
+            data = yaml.safe_load(f) or {}
+    except (OSError, yaml.YAMLError):
+        return {}
+    # Prefer top-level eppo_sync, then vars.eppo_sync
+    sync_config = data.get("eppo_sync") or data.get("vars", {}).get("eppo_sync")
+    if not isinstance(sync_config, dict):
+        return {}
+    return {
+        k: v for k, v in sync_config.items()
+        if k in ("creator_email", "updater_email", "team_name") and v is not None
+    }
+
+
 def main(
     dbt_project_dir: pathlib.Path,
     manifest_path: pathlib.Path,
     eppo_api_key: Optional[str],
     eppo_base_url: str,
     sync_tag: Optional[str],
+    creator_email: Optional[str],
+    updater_email: Optional[str],
+    team_name: Optional[str],
     dry_run: bool
 ):
     """
@@ -84,8 +123,13 @@ def main(
         click.echo("Error: Eppo API Key is required. Set the EPPO_API_KEY environment variable or use the --eppo-api-key option.", err=True)
         sys.exit(1)
 
+    # Load optional sync config from dbt_project.yml; CLI options override
+    file_config = _load_eppo_sync_config(dbt_project_dir)
+    effective_creator = creator_email if creator_email is not None else file_config.get("creator_email")
+    effective_updater = updater_email if updater_email is not None else file_config.get("updater_email")
+    effective_team = team_name if team_name is not None else file_config.get("team_name")
+
     # Convert Path objects back to strings for run_sync function if needed
-    # (Current run_sync expects strings, adjust if run_sync signature changes)
     project_dir_str = str(dbt_project_dir.resolve())
     manifest_path_str = str(manifest_path.resolve())
 
@@ -95,6 +139,12 @@ def main(
     click.echo(f"  Eppo API URL: {eppo_base_url}")
     if sync_tag:
         click.echo(f"  Sync Tag: {sync_tag}")
+    if effective_creator:
+        click.echo(f"  Creator email: {effective_creator}")
+    if effective_updater:
+        click.echo(f"  Updater email: {effective_updater}")
+    if effective_team:
+        click.echo(f"  Team name: {effective_team}")
     click.echo(f"  Dry Run: {dry_run}")
     click.echo("-" * 20)
 
@@ -106,7 +156,10 @@ def main(
             eppo_api_key=eppo_api_key,
             eppo_base_url=eppo_base_url,
             sync_tag=sync_tag,
-            dry_run=dry_run
+            dry_run=dry_run,
+            creator_email=effective_creator,
+            updater_email=effective_updater,
+            team_name=effective_team,
         )
 
         if success:
