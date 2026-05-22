@@ -18,7 +18,7 @@ urllib3 = "^2.6.3" # set explicitly to solve vulnerability in earlier versions
 deepdiff = "^8.6.1" # set explicitly to solve critical vulnerability in earlier versions
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4" # For running tests
+pytest = "^8.4" # For running tests; >=8.3.4 patches GHSA-6w46-j5rx-g56g
 pytest-mock = "^3.15.1"
 
 [build-system]
