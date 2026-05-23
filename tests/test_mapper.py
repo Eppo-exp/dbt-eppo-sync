@@ -108,6 +108,71 @@ def test_map_successful():
     # Note: Percentile-specific fields (percentile value) are not currently supported
 
 
+def test_map_sync_level_creator_updater_team():
+    """Sync-level creator_email, updater_email, team_name appear in payload when provided."""
+    payload = map_dbt_to_eppo_sync_payload(
+        dbt_metrics=SAMPLE_METRICS,
+        dbt_semantic_models=SAMPLE_SEMANTIC_MODELS,
+        sql_map=SAMPLE_SQL_MAP,
+        sync_tag="test-run",
+        creator_email="data-team@company.com",
+        updater_email="ci-bot@company.com",
+        team_name="Analytics",
+    )
+    assert payload["creator_email"] == "data-team@company.com"
+    assert payload["updater_email"] == "ci-bot@company.com"
+    assert payload["team_name"] == "Analytics"
+
+
+def test_map_sync_level_omit_optional_metadata():
+    """When creator_email, updater_email, team_name are omitted they are not in payload (API clears)."""
+    payload = map_dbt_to_eppo_sync_payload(
+        dbt_metrics=SAMPLE_METRICS,
+        dbt_semantic_models=SAMPLE_SEMANTIC_MODELS,
+        sql_map=SAMPLE_SQL_MAP,
+        sync_tag="test-run",
+    )
+    assert "creator_email" not in payload
+    assert "updater_email" not in payload
+    assert "team_name" not in payload
+
+
+def test_map_per_metric_override_creator_team():
+    """Per-metric eppo_creator_email, eppo_team_name in meta override sync-level for that metric only."""
+    metrics_with_override = [
+        {
+            "name": "total_revenue",
+            "label": "Total Revenue",
+            "type": "sum",
+            "measure": {"name": "revenue"},
+            "meta": {"eppo_creator_email": "analyst@company.com", "eppo_team_name": "Growth"},
+        },
+        {
+            "name": "avg_revenue",
+            "label": "Avg Revenue",
+            "type": "average",
+            "measure": {"name": "revenue"},
+        },
+    ]
+    payload = map_dbt_to_eppo_sync_payload(
+        dbt_metrics=metrics_with_override,
+        dbt_semantic_models=SAMPLE_SEMANTIC_MODELS,
+        sql_map=SAMPLE_SQL_MAP,
+        sync_tag="test-run",
+        creator_email="default@company.com",
+        team_name="Analytics",
+    )
+    assert payload["creator_email"] == "default@company.com"
+    assert payload["team_name"] == "Analytics"
+    eppo_metrics = {m["name"]: m for m in payload["metrics"]}
+    # Total Revenue has per-metric override
+    assert eppo_metrics["Total Revenue"].get("creator_email") == "analyst@company.com"
+    assert eppo_metrics["Total Revenue"].get("team_name") == "Growth"
+    # Avg Revenue has no override, so no per-metric fields (uses sync-level)
+    assert "creator_email" not in eppo_metrics["Avg Revenue"]
+    assert "team_name" not in eppo_metrics["Avg Revenue"]
+
+
 def test_map_missing_sql():
     """Test warning when compiled SQL is missing for a linked SM."""
     # The mapper now logs a warning and continues instead of raising

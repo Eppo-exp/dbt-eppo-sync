@@ -53,7 +53,10 @@ def run_sync(
     eppo_api_key: str,
     eppo_base_url: Optional[str] = None,
     sync_tag: Optional[str] = None,
-    dry_run: bool = False
+    dry_run: bool = False,
+    creator_email: Optional[str] = None,
+    updater_email: Optional[str] = None,
+    team_name: Optional[str] = None,
 ) -> bool:
     """
     Orchestrates the synchronization process from dbt artifacts to Eppo
@@ -74,6 +77,9 @@ def run_sync(
                   Defaults to 'dbt-sync-<timestamp>'.
         dry_run: If True, performs parsing and mapping but does not call the Eppo API.
                  Prints the generated payload instead.
+        creator_email: Optional email for metric creator (sync-level). Omit to leave unchanged/clear.
+        updater_email: Optional email for last updater (sync-level). Omit to leave unchanged/clear.
+        team_name: Optional team name to associate with metrics (sync-level). Omit to leave unchanged/clear.
 
     Returns:
         True if the sync process completed successfully (or dry run was successful).
@@ -119,8 +125,10 @@ def run_sync(
             dbt_metrics=all_metrics,
             dbt_semantic_models=all_semantic_models,
             sql_map=sql_map,
-            sync_tag=effective_sync_tag
-            # TODO: Add reference_url_base if needed/available
+            sync_tag=effective_sync_tag,
+            creator_email=creator_email,
+            updater_email=updater_email,
+            team_name=team_name,
         )
         print(f"Generated payload with {len(eppo_payload.get('fact_sources',[]))} fact sources and {len(eppo_payload.get('metrics',[]))} metrics.")
 
