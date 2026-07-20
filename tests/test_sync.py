@@ -76,9 +76,42 @@ def test_run_sync_successful_live(mock_dependencies):
     # Assert
     assert success is True
     mock_dependencies['parse'].assert_called_once_with(dbt_project_dir=PROJECT_DIR, manifest_path=MANIFEST_PATH)
-    mock_dependencies['map'].assert_called_once()
+    call_kw = mock_dependencies['map'].call_args[1]
+    assert call_kw.get('creator_email') is None
+    assert call_kw.get('updater_email') is None
+    assert call_kw.get('team_name') is None
     mock_dependencies['client_init'].assert_called_once()
     mock_dependencies['sync_defs'].assert_called_once()
+
+
+def test_run_sync_passes_creator_updater_team_to_mapper(mock_dependencies):
+    """run_sync passes creator_email, updater_email, team_name to map_dbt_to_eppo_sync_payload."""
+    mock_dependencies['parse'].return_value = (
+        [{'name': 'm1'}],
+        [{'name': 'sm1', '_model_unique_id': 'model.p.sm1'}],
+        {'model.p.sm1': 'SELECT 1'},
+    )
+    mock_dependencies['map'].return_value = {
+        "sync_tag": "test",
+        "fact_sources": [],
+        "metrics": [],
+    }
+    success = sync.run_sync(
+        dbt_project_dir=PROJECT_DIR,
+        manifest_path=MANIFEST_PATH,
+        eppo_api_key=API_KEY,
+        dry_run=True,
+        creator_email="data@company.com",
+        updater_email="ci@company.com",
+        team_name="Analytics",
+    )
+    assert success is True
+    mock_dependencies['map'].assert_called_once()
+    call_kw = mock_dependencies['map'].call_args[1]
+    assert call_kw['creator_email'] == "data@company.com"
+    assert call_kw['updater_email'] == "ci@company.com"
+    assert call_kw['team_name'] == "Analytics"
+
 
 def test_run_sync_successful_dry_run(mock_dependencies):
     """Test a successful run in dry run mode."""
